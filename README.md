@@ -53,6 +53,8 @@ npm run demo       # 无 DSH 全链路冒烟（读本仓 atoms/）
 | manifest（黑盒契约） | `execute` 只返回 canonical JSON，人话在 `render` |
 | `side_effects` | 由工具本身的实现负责（本插件是纯读/查，无副作用） |
 
+渐进披露：`atom_search` 只给 `intent` 一句话；`atom_read` 展开 `description`（四节 Markdown 详情，结构见商店仓库的 [`spec/detail-convention.md`](https://github.com/ZiFan1117/software-atom-market/blob/main/spec/detail-convention.md)）。
+
 投稿/校验/收录流程见软件原子市场仓库的 [`CONTRIBUTING.md`](https://github.com/ZiFan1117/software-atom-market/blob/main/CONTRIBUTING.md) 与 [`spec/`](https://github.com/ZiFan1117/software-atom-market/tree/main/spec)。roadmap：v0.2 `atom_assemble`（意图 → 检索 → 接线图 → 拼装期校验）。
 
 ## License
