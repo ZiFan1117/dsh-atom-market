@@ -29,9 +29,16 @@ test('store: read by id returns full manifest', () => {
 test('validate: good manifest passes, bad manifest lists errors', () => {
   const good = validateManifestObject({
     id: 'pdf.extract_tables', layer: 'capability', version: '1.0.0',
-    intent: '从 PDF 抽出表格', input: { type: 'object' }, output: { type: 'array' },
+    intent: '从 PDF 抽出表格', description: '## 怎么做\nMarkdown 详情。',
+    input: { type: 'object' }, output: { type: 'array' },
   })
   assert.equal(good.valid, true)
+  const nonStr = validateManifestObject({
+    id: 'a.b', layer: 'capability', version: '1.0.0', intent: 'xx',
+    input: { type: 'object' }, output: { type: 'object' }, description: 42,
+  })
+  assert.equal(nonStr.valid, false)
+  assert.ok(nonStr.errors.some((e) => e.includes('description')))
   const bad = validateManifestText(JSON.stringify({
     id: 'BAD', version: 'x', verified: true, input: {}, output: {},
   }))

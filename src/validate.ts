@@ -7,7 +7,7 @@ export interface ValidateResult {
 const LAYERS = ['capability', 'primitive']
 const SIDE_EFFECTS = ['none', 'network', 'file', 'email', 'db', 'process']
 const ALLOWED_TOP_KEYS = new Set([
-  'id', 'layer', 'version', 'intent', 'tags', 'input', 'output',
+  'id', 'layer', 'version', 'intent', 'description', 'tags', 'input', 'output',
   'side_effects', 'lang', 'author', 'verified', 'implementation_ref', 'deps', 'tests',
 ])
 const ID_RE = /^[a-z0-9]+(\.[a-z0-9_]+)+$/
@@ -73,7 +73,7 @@ export function validateManifestObject(m: unknown, context = 'manifest'): Valida
     errors.push(`${where('deps')}: 必须是字符串数组`)
   }
 
-  for (const k of ['lang', 'author', 'implementation_ref'] as const) {
+  for (const k of ['lang', 'author', 'implementation_ref', 'description'] as const) {
     if (k in m && typeof m[k] !== 'string') errors.push(`${where(k)}: 必须是字符串`)
   }
 
