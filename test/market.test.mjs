@@ -1,32 +1,41 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { openStore, findStoreRoot, readAtoms, searchAtoms, readAtom } from '../lib/store.js'
+import { fileURLToPath } from 'node:url'
+import { dirname, join } from 'node:path'
+import { openStore, readAtoms, searchAtoms, readAtom } from '../lib/store.js'
 import { validateManifestText, validateManifestObject } from '../lib/validate.js'
 import { draftAtom } from '../lib/draft.js'
 
-test('store: local dir finds repo atoms and full-text search works', () => {
-  const root = findStoreRoot()
-  assert.ok(root, 'store root resolvable from plugin dir')
-  const atoms = readAtoms(root)
-  assert.equal(atoms.length, 4)
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), 'fixtures')
+
+test('store: fixture dir has atoms and full-text search works', () => {
+  const atoms = readAtoms(ROOT)
+  assert.equal(atoms.length, 2)
   const csv = searchAtoms(atoms, { query: 'CSV', limit: 5 })
   assert.ok(csv.some((a) => a.id === 'data.csv_to_json'))
 })
 
-test('store: openStore honors DSH_ATOM_STORE_DIR (local override)', async () => {
-  const root = findStoreRoot()
-  const { records, error } = await openStore({ DSH_ATOM_STORE_DIR: root }).load()
-  assert.equal(error, undefined)
-  assert.equal(records.length, 4)
+test('store: search stays at summary layer (no description)', () => {
+  const atoms = readAtoms(ROOT)
+  const hit = searchAtoms(atoms, { query: 'PDF' })[0]
+  assert.equal(hit.intent, '从 PDF 中抽出所有表格')
+  assert.ok(!('description' in hit), '列表层不应携带 description')
 })
 
-test('store: read by id returns full manifest', () => {
-  const rec = readAtom(readAtoms(findStoreRoot()), 'pdf.extract_tables')
+test('store: openStore honors DSH_ATOM_STORE_DIR (local override)', async () => {
+  const { records, error } = await openStore({ DSH_ATOM_STORE_DIR: ROOT }).load()
+  assert.equal(error, undefined)
+  assert.equal(records.length, 2)
+})
+
+test('store: read by id reveals full manifest incl description', () => {
+  const rec = readAtom(readAtoms(ROOT), 'pdf.extract_tables')
   assert.ok(rec)
   assert.equal(rec.manifest.intent, '从 PDF 中抽出所有表格')
+  assert.match(rec.manifest.description, /OCR/)
 })
 
-test('validate: good manifest passes, bad manifest lists errors', () => {
+test('validate: good manifest passes (description allowed), bad fails', () => {
   const good = validateManifestObject({
     id: 'pdf.extract_tables', layer: 'capability', version: '1.0.0',
     intent: '从 PDF 抽出表格', description: '## 怎么做\nMarkdown 详情。',

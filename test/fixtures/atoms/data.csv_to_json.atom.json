@@ -1,0 +1,15 @@
+{
+  "id": "data.csv_to_json",
+  "layer": "capability",
+  "version": "1.0.0",
+  "intent": "把 CSV 文本转成 JSON 数组",
+  "description": "详情层示例：按表头解析，无表头则输出 col_N 键。",
+  "tags": ["csv", "json"],
+  "side_effects": "none",
+  "input": {
+    "type": "object",
+    "required": ["csv_text"],
+    "properties": { "csv_text": { "type": "string" } }
+  },
+  "output": { "type": "array" }
+}
