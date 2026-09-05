@@ -1,0 +1,9 @@
+# 该 bundle 把自己作为一个插件行插入 profile。
+# `dsh plugin add dsh-atom-market` 安装后，启动器据此激活本行，
+# 使本包的 apply(ctx) 运行并向 ctx.tools 注册原子市场工具。
+
+- insert:
+    - id: atom-market
+      name: 'dsh-atom-market'
+      config:
+        storeDir: !!js process.env.DSH_ATOM_STORE_DIR

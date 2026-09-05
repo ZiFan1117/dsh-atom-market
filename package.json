@@ -1,0 +1,58 @@
+{
+  "name": "dsh-atom-market",
+  "version": "0.1.1",
+  "description": "DeepSeek Harness 插件：把 Software Atom Market（软件原子市场）变成 Agent 可逛、可校验、可投稿的能力库。Tools: atom_search / atom_read / atom_validate / atom_draft.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ZiFan1117/dsh-atom-market.git"
+  },
+  "homepage": "https://github.com/ZiFan1117/dsh-atom-market",
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "cordis.patch.yml"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "demo": "node demo.mjs",
+    "test": "node --test"
+  },
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "cordis",
+    "ai-agents",
+    "deepseek-harness",
+    "software-atom-market",
+    "marketplace"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.2",
+    "@deepseek-ai/dsh-tools": "0.0.1-rc.1"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "^4.0.2",
+    "@deepseek-ai/dsh-tools": "0.0.1-rc.1",
+    "@types/node": "^24.0.0",
+    "typescript": "^5.6.0"
+  }
+}
