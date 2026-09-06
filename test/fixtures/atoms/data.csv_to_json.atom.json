@@ -5,6 +5,7 @@
   "intent": "把 CSV 文本转成 JSON 数组",
   "description": "详情层示例：按表头解析，无表头则输出 col_N 键。",
   "tags": ["csv", "json"],
+  "category": "data",
   "side_effects": "none",
   "input": {
     "type": "object",

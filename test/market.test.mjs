@@ -15,11 +15,26 @@ test('store: fixture dir has atoms and full-text search works', () => {
   assert.ok(csv.some((a) => a.id === 'data.csv_to_json'))
 })
 
-test('store: search stays at summary layer (no description)', () => {
+test('store: search stays at summary layer (no description) but carries category', () => {
   const atoms = readAtoms(ROOT)
   const hit = searchAtoms(atoms, { query: 'PDF' })[0]
   assert.equal(hit.intent, '从 PDF 中抽出所有表格')
+  assert.equal(hit.category, 'document')
   assert.ok(!('description' in hit), '列表层不应携带 description')
+})
+
+test('validate: category accepted when valid, rejected otherwise', () => {
+  const ok = validateManifestObject({
+    id: 'a.b', layer: 'capability', version: '1.0.0', intent: 'xx',
+    category: 'data', input: { type: 'object' }, output: { type: 'object' },
+  })
+  assert.equal(ok.valid, true)
+  const bad = validateManifestObject({
+    id: 'a.b', layer: 'capability', version: '1.0.0', intent: 'xx',
+    category: 'not-a-category', input: { type: 'object' }, output: { type: 'object' },
+  })
+  assert.equal(bad.valid, false)
+  assert.ok(bad.errors.some((e) => e.includes('category')))
 })
 
 test('store: openStore honors DSH_ATOM_STORE_DIR (local override)', async () => {

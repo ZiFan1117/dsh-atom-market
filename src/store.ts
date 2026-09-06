@@ -5,6 +5,7 @@ export interface AtomPublicFields {
   id: string
   intent: string
   layer: string
+  category?: string
   side_effects?: string
   version: string
   verified?: boolean
@@ -42,6 +43,7 @@ function toRecord(manifest: Record<string, unknown>, origin: string): AtomRecord
     id: typeof manifest.id === 'string' ? manifest.id : '',
     intent: typeof manifest.intent === 'string' ? manifest.intent : '',
     layer: typeof manifest.layer === 'string' ? manifest.layer : '',
+    category: typeof manifest.category === 'string' ? manifest.category : undefined,
     side_effects: typeof manifest.side_effects === 'string' ? manifest.side_effects : undefined,
     version: typeof manifest.version === 'string' ? manifest.version : '',
     verified: typeof manifest.verified === 'boolean' ? manifest.verified : undefined,
@@ -189,6 +191,7 @@ export function searchAtoms(records: AtomRecord[], opts: ListOptions): AtomPubli
     id: r.id,
     intent: r.intent,
     layer: r.layer,
+    category: r.category,
     side_effects: r.side_effects,
     version: r.version,
     verified: r.verified,

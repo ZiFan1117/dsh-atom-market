@@ -5,6 +5,7 @@
   "intent": "从 PDF 中抽出所有表格",
   "description": "详情层示例：启发式定位候选表格区后重建网格；扫描件请先接 OCR。",
   "tags": ["pdf", "table"],
+  "category": "document",
   "side_effects": "none",
   "input": {
     "type": "object",

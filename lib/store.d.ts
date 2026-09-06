@@ -2,6 +2,7 @@ export interface AtomPublicFields {
     id: string;
     intent: string;
     layer: string;
+    category?: string;
     side_effects?: string;
     version: string;
     verified?: boolean;
