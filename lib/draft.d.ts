@@ -2,6 +2,7 @@ export interface DraftOptions {
     intent: string;
     id?: string;
     layer?: string;
+    category?: string;
     side_effects?: string;
     tags?: string[];
     input?: Record<string, unknown>;

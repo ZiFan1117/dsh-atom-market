@@ -13,9 +13,45 @@ const ALLOWED_TOP_KEYS = new Set([
 ])
 const ID_RE = /^[a-z0-9]+(\.[a-z0-9_]+)+$/
 const VER_RE = /^\d+\.\d+\.\d+$/
+const HEADINGS = ['它做什么', '怎么实现', '何时用', '示例']
 
 function isObj(v: unknown): v is Record<string, unknown> {
   return v !== null && typeof v === 'object' && !Array.isArray(v)
+}
+
+interface Fence { lang: string; body: string }
+
+function extractFences(text: string): Fence[] {
+  const out: Fence[] = []
+  const re = /```([^\n`]*)\n([\s\S]*?)```/g
+  let m: RegExpExecArray | null
+  while ((m = re.exec(text)) !== null) {
+    out.push({ lang: m[1].trim(), body: m[2] })
+  }
+  return out
+}
+
+function checkDescription(desc: unknown, context: string, errors: string[]): void {
+  if (typeof desc !== 'string' || desc.trim().length === 0) {
+    errors.push(`${context}: description 必填（Markdown，四节+四图）`)
+    return
+  }
+  for (const h of HEADINGS) {
+    if (!new RegExp(`^##[^\\n]*${h}`, 'm').test(desc)) {
+      errors.push(`${context}: description 缺少章节 “${h}”`)
+    }
+  }
+  const fences = extractFences(desc)
+  if (fences.length === 0) {
+    errors.push(`${context}: description 没有任何代码块（需要 4 张图）`)
+    return
+  }
+  const hasMermaid = (p: RegExp) => fences.some((f) => f.lang.includes('mermaid') && p.test(f.body))
+  if (!hasMermaid(/\bflowchart\b/)) errors.push(`${context}: description 缺少数据流转图（mermaid flowchart）`)
+  if (!hasMermaid(/\bclassDiagram\b|\bblock-beta\b/)) errors.push(`${context}: description 缺少接口/模块分解图（mermaid classDiagram / block-beta）`)
+  if (!hasMermaid(/\bsequenceDiagram\b/)) errors.push(`${context}: description 缺少交互时序图（mermaid sequenceDiagram）`)
+  const hasCall = fences.some((f) => /\bdigraph\b/.test(f.body) || /graph\s+(TD|LR|RL|BT)\b/.test(f.body))
+  if (!hasCall) errors.push(`${context}: description 缺少调用图（digraph 或 mermaid graph TD/LR/RL/BT）`)
 }
 
 export function validateManifestObject(m: unknown, context = 'manifest'): ValidateResult {
@@ -23,15 +59,13 @@ export function validateManifestObject(m: unknown, context = 'manifest'): Valida
   const warnings: string[] = []
   const where = (k: string) => `${context}: ${k}`
 
-  if (!isObj(m)) {
-    return { valid: false, errors: [`${context}: 顶层必须是 JSON 对象`], warnings: [] }
-  }
+  if (!isObj(m)) return { valid: false, errors: [`${context}: 顶层必须是 JSON 对象`], warnings: [] }
 
   for (const key of Object.keys(m)) {
     if (!ALLOWED_TOP_KEYS.has(key)) errors.push(`${where(key)}: 不在 spec 允许的顶层键内（additionalProperties=false）`)
   }
 
-  const required = ['id', 'layer', 'version', 'intent', 'input', 'output']
+  const required = ['id', 'layer', 'version', 'intent', 'description', 'input', 'output']
   for (const key of required) {
     if (!(key in m)) errors.push(`${where(key)}: 缺少必填字段`)
   }
@@ -51,6 +85,8 @@ export function validateManifestObject(m: unknown, context = 'manifest'): Valida
   if (typeof m.intent !== 'string' || (m.intent as string).trim().length < 2) {
     errors.push(`${where('intent')}: 必须是一句≥2字的意图说明`)
   }
+
+  checkDescription(m.description, context, errors)
 
   for (const ioKey of ['input', 'output']) {
     const io = m[ioKey]
@@ -78,7 +114,7 @@ export function validateManifestObject(m: unknown, context = 'manifest'): Valida
     errors.push(`${where('deps')}: 必须是字符串数组`)
   }
 
-  for (const k of ['lang', 'author', 'implementation_ref', 'description'] as const) {
+  for (const k of ['lang', 'author', 'implementation_ref'] as const) {
     if (k in m && typeof m[k] !== 'string') errors.push(`${where(k)}: 必须是字符串`)
   }
 

@@ -1,6 +1,6 @@
 {
   "name": "dsh-atom-market",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "DeepSeek Harness 插件：把 Software Atom Market（软件原子市场）变成 Agent 可逛、可校验、可投稿的能力库。Tools: atom_search / atom_read / atom_validate / atom_draft.",
   "repository": {
     "type": "git",

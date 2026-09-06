@@ -1,22 +1,24 @@
-import { openStore, searchAtoms, readAtom } from './lib/store.js'
+import { openStore, searchAtoms, readAtom, fetchRecordManifest } from './lib/store.js'
 import { validateManifestText } from './lib/validate.js'
 import { draftAtom } from './lib/draft.js'
 
 const out = {}
-out.mode = process.env.DSH_ATOM_STORE_DIR ? `local:${process.env.DSH_ATOM_STORE_DIR}` : 'github (default)'
+out.mode = process.env.DSH_ATOM_STORE_DIR ? `local:${process.env.DSH_ATOM_STORE_DIR}` : 'github index (default)'
 const { records, error } = await openStore().load()
 if (error) {
   out.storeError = error
 } else {
   out.storeCount = records.length
-  out.searchPdf = searchAtoms(records, { query: 'pdf 表格', limit: 3 })
+  out.search = searchAtoms(records, { query: 'pdf', source: 'all', limit: 5 }).map((r) => ({
+    id: r.id, intent: r.intent, tier: r.tier, source: r.repo,
+  }))
   const rec = readAtom(records, 'pdf.extract_tables')
-  out.readAtom = rec ? { found: true, id: rec.id, intent: rec.intent } : { found: false }
+  if (rec) {
+    const fm = await fetchRecordManifest(rec)
+    out.read = fm.manifest ? { found: true, id: rec.id, tier: rec.tier, manifestKeys: Object.keys(fm.manifest) } : { found: false, error: fm.error }
+  } else {
+    out.read = { found: false }
+  }
 }
-out.validateGood = validateManifestText(JSON.stringify({
-  id: 'demo.hello', layer: 'capability', version: '0.1.0', intent: '打个招呼',
-  input: { type: 'object' }, output: { type: 'object' },
-}))
-out.validateBad = validateManifestText(JSON.stringify({ id: 'x' }))
 out.draft = draftAtom({ intent: '把金额换算成人民币', lang: 'python', tags: ['money'] })
 console.log(JSON.stringify(out, null, 2))

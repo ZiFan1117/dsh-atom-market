@@ -4,6 +4,7 @@ export interface DraftOptions {
   intent: string
   id?: string
   layer?: string
+  category?: string
   side_effects?: string
   tags?: string[]
   input?: Record<string, unknown>
@@ -39,10 +40,12 @@ export function draftAtom(opts: DraftOptions): DraftResult {
     layer,
     version: '0.1.0',
     intent: opts.intent.trim(),
+    description: '', // description 必填：请补四节（它做什么/怎么实现/何时用/示例）+ 四张 Mermaid 图
     side_effects,
     verified: false,
   }
   if (opts.tags && opts.tags.length) draft.tags = opts.tags
+  if (opts.category) draft.category = opts.category
   if (opts.lang) draft.lang = opts.lang
   if (opts.author) draft.author = opts.author
   if (opts.implementation_ref) draft.implementation_ref = opts.implementation_ref
@@ -53,6 +56,7 @@ export function draftAtom(opts: DraftOptions): DraftResult {
   if (!opts.input || !opts.output) {
     notes.push('缺少 input 或 output：请补上数据形状，否则无法通过校验')
   }
+  notes.push('description 必填：需含 四节标题 + 数据流转/模块分解/时序/调用图 四张 Mermaid 图（见 spec/detail-convention.md v0.2）')
   notes.push('实现代码不入库：请用 implementation_ref 指向你的仓库/npm/API')
   notes.push(...CONTRIBUTING_STEPS)
 
