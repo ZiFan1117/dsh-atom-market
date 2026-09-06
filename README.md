@@ -28,11 +28,10 @@ Topics: `dsh-plugin` `dsh` `cordis` `deepseek-harness` `ai-agents`
 本包声明 `dsh.bundle.patch`（见 `cordis.patch.yml`），安装后即激活插件行，`apply(ctx)` 自动向 `ctx.tools` 注册四个工具。`lib/` 随仓提供，装完即可用、无需本地构建。
 
 ```sh
-# npm 发布后：
-dsh plugin add dsh-atom-market
-# 或直接从本仓安装：
 dsh plugin add github:ZiFan1117/dsh-atom-market
 ```
+
+> npm 发布已放弃（npm 账号受限）。不影响安装：DSH 插件管理器原生支持 github spec，本仓 `lib/` 随仓直接可用。dsh-market / awesome-dsh-plugin 收录仍以该安装方式申报。
 
 ## 开发
 
