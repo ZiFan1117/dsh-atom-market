@@ -66,14 +66,23 @@ async function loadIndex(env: StoreEnv): Promise<LoadResult> {
   const hit = cache.get(key)
   if (hit && Date.now() - hit.at < CACHE_TTL_MS) return { records: hit.records }
 
-  const { data, error } = await fetchJson<{ atoms?: IndexAtom[] }>(
+  const { data, error } = await fetchJson<{ content?: string }>(
     `https://api.github.com/repos/${owner}/${repo}/contents/registry/index.json?ref=${branch}`,
     env.GITHUB_PERSONAL_ACCESS_TOKEN,
   )
-  if (error || !data || !Array.isArray(data.atoms)) {
-    return { records: [], error: `无法读取商店索引（${owner}/${repo}@${branch} registry/index.json）：${error ?? '格式异常'}；可设 DSH_ATOM_STORE_DIR 指向本地 atoms 目录` }
+  if (error || !data?.content) {
+    return { records: [], error: `无法读取商店索引（${owner}/${repo}@${branch} registry/index.json）：${error ?? '无内容'}；可设 DSH_ATOM_STORE_DIR 指向本地 atoms 目录` }
   }
-  const records: AtomRecord[] = data.atoms
+  let parsed: { atoms?: IndexAtom[] } | null = null
+  try {
+    parsed = JSON.parse(Buffer.from(data.content, 'base64').toString('utf8')) as { atoms?: IndexAtom[] }
+  } catch {
+    parsed = null
+  }
+  if (!parsed || !Array.isArray(parsed.atoms)) {
+    return { records: [], error: `商店索引格式异常（${owner}/${repo}@${branch} registry/index.json）；可设 DSH_ATOM_STORE_DIR 指向本地 atoms 目录` }
+  }
+  const records: AtomRecord[] = parsed.atoms
     .filter((a) => typeof a?.id === 'string' && typeof a?.path === 'string')
     .map((a) => ({ ...a, tier: isCentral(owner, repo, a.path) ? 'verified' : 'community' }))
   cache.set(key, { at: Date.now(), records })
