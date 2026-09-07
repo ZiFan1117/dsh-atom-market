@@ -22,7 +22,7 @@ export function apply(ctx: Context): void {
       query: { type: 'string', description: '意图关键词，如 "从 PDF 抽出表格"' },
       source: { type: 'string', enum: ['verified', 'community', 'all'], description: '来源层级：verified=中央策展 / community=联邦发现 / all=全部，默认 all' },
       category: { type: 'string', description: '主题分类过滤（data/document/money/comms/…）' },
-      limit: { type: 'integer', description: '返回条数上限，默认 20' },
+      limit: { type: 'integer', description: '返回条数上限（默认 200，最大 500）；不传则列出全部' },
     },
     output: {
       schema: { type: 'json' },
