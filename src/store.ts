@@ -90,33 +90,24 @@ async function loadIndex(env: StoreEnv): Promise<LoadResult> {
   return { records }
 }
 
-/** 把一份原子文档/旧 JSON 文本解析为"有效 manifest"（frontmatter meta + description=正文）。 */
-function effectiveManifest(text: string, path: string): { manifest?: Record<string, unknown>; error?: string } {
-  const clean = text.replace(/^\uFEFF/, '').trimStart()
-  const docLike = path.endsWith('.atom.md') || path.endsWith('.md') || clean.startsWith('---')
-  if (docLike) {
-    const parsed = parseAtomDocument(text)
-    if (!parsed.valid) {
-      return { error: `atom 文档解析失败：${parsed.errors.join(' | ')}` }
-    }
-    return { manifest: { ...parsed.meta, description: parsed.body } as Record<string, unknown> }
+/** v0.3：把一份 atom 文档文本解析为"有效 manifest"（frontmatter meta + description=正文）。仅 .atom.md。 */
+function effectiveManifest(text: string): { manifest?: Record<string, unknown>; error?: string } {
+  const parsed = parseAtomDocument(text)
+  if (!parsed.valid) {
+    return { error: `atom 文档解析失败：${parsed.errors.join(' | ')}` }
   }
-  try {
-    return { manifest: JSON.parse(text) as Record<string, unknown> }
-  } catch (e) {
-    return { error: `JSON 解析失败：${e instanceof Error ? e.message : String(e)}` }
-  }
+  return { manifest: { ...parsed.meta, description: parsed.body } as Record<string, unknown> }
 }
 
 export function readLocalDir(root: string): AtomRecord[] {
   const atomsDir = join(root, 'atoms')
   if (!existsSync(atomsDir)) return []
   return readdirSync(atomsDir)
-    .filter((f) => f.endsWith('.atom.json') || f.endsWith('.atom.md'))
+    .filter((f) => f.endsWith('.atom.md'))
     .map((f) => {
       try {
         const text = readFileSync(join(atomsDir, f), 'utf8')
-        const { manifest, error } = effectiveManifest(text, f)
+        const { manifest, error } = effectiveManifest(text)
         if (error || !manifest) return null
         return {
           repo: 'local',
@@ -143,7 +134,7 @@ export function openStore(env: StoreEnv = process.env): { load: () => Promise<Lo
     return {
       async load() {
         const records = readLocalDir(root)
-        if (records.length === 0) return { records: [], error: `DSH_ATOM_STORE_DIR 下没有可读原子：${root}` }
+        if (records.length === 0) return { records: [], error: `DSH_ATOM_STORE_DIR 下没有 *.atom.md：${root}` }
         return { records }
       },
     }
@@ -154,12 +145,11 @@ export function openStore(env: StoreEnv = process.env): { load: () => Promise<Lo
 export async function fetchRecordManifest(rec: AtomRecord, token?: string): Promise<{ manifest?: Record<string, unknown>; error?: string }> {
   if (rec.repo === 'local') {
     try {
-      const text = readFileSync(rec.path, 'utf8')
-      const res = effectiveManifest(text, rec.path)
+      const res = effectiveManifest(readFileSync(rec.path, 'utf8'))
       if (res.error) return { error: res.error }
       return { manifest: res.manifest }
     } catch (e) {
-      return { error: `读取本地 manifest 失败：${e instanceof Error ? e.message : String(e)}` }
+      return { error: `读取本地 atom 文档失败：${e instanceof Error ? e.message : String(e)}` }
     }
   }
   const { data, error } = await fetchJson<{ content?: string }>(
@@ -168,12 +158,11 @@ export async function fetchRecordManifest(rec: AtomRecord, token?: string): Prom
   )
   if (error || !data?.content) return { error: `无法从来源仓 ${rec.repo} 读取 ${rec.path}（${error ?? '无内容'}）` }
   try {
-    const text = Buffer.from(data.content, 'base64').toString('utf8')
-    const res = effectiveManifest(text, rec.path)
-    if (res.error) return { error: `来源仓 manifest 解析失败：${res.error}` }
+    const res = effectiveManifest(Buffer.from(data.content, 'base64').toString('utf8'))
+    if (res.error) return { error: `来源仓 atom 文档解析失败：${res.error}` }
     return { manifest: res.manifest }
   } catch (e) {
-    return { error: `来源仓 manifest 解析失败：${e instanceof Error ? e.message : String(e)}` }
+    return { error: `来源仓 atom 文档解析失败：${e instanceof Error ? e.message : String(e)}` }
   }
 }
 
