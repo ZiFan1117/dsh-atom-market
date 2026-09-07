@@ -113,11 +113,9 @@ export function validateAtomDocumentText(text: string): ValidateResult {
   return { valid: errors.length === 0, errors, warnings }
 }
 
-/** 自动识别：以 --- 开头按 atom 文档(.atom.md)，否则按 JSON manifest（v0.2 兼容）。 */
+/** v0.3 唯一格式：atom 文档（--- YAML frontmatter + 正文）。不再兼容旧 JSON manifest。 */
 export function validateAtomText(text: string): ValidateResult {
-  const clean = text.replace(/^\uFEFF/, '').trimStart()
-  if (clean.startsWith('---')) return validateAtomDocumentText(text)
-  return validateManifestText(text)
+  return validateAtomDocumentText(text)
 }
 
 export function validateManifestObject(m: unknown, context = 'manifest'): ValidateResult {
