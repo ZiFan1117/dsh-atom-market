@@ -2,7 +2,7 @@
 id: atom.registry.search
 layer: primitive
 version: 0.1.0
-intent: "在原子指针集里按 query/layer/category/source 检索（id+intent 子串匹配）"
+intent: "在原子指针集里按 query 检索 id+intent+tags+when_to_use（可过滤 layer/category/source）"
 when_to_use: "适用：atom_search 返回指针级一句话命中。"
 language: zh-CN
 tags: ["atom","search","registry","retrieval"]
@@ -19,7 +19,7 @@ output: {"type":"object","properties":{"items":{"type":"array","items":{"type":"
 
 ## 它做什么
 
-在原子指针集里按 query/layer/category/source 检索（id+intent 子串匹配）。确定性实现：不调用 LLM、可重复可测试。
+在原子指针集里按 query 检索 id+intent+tags+when_to_use（可过滤 layer/category/source）。确定性实现：不调用 LLM、可重复可测试。
 
 ## 怎么实现
 
@@ -35,7 +35,7 @@ S --> OUT[items[]]
 ```mermaid
 classDiagram
 class Searcher { +search(records, opts) }
-Searcher : match(id+intent)
+Searcher : match(id+intent+tags+when)
 Searcher : filter(layer/category/source)
 ```
 

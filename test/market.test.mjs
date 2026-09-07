@@ -50,6 +50,15 @@ test('store: search filters by source tier', async () => {
   assert.equal(verified.length, 2)
 })
 
+test('store: search matches tags & when_to_use (召回面增强)', async () => {
+  const { records } = await openStore({ DSH_ATOM_STORE_DIR: ROOT }).load()
+  const byTag = searchAtoms(records, { query: 'parse' })
+  assert.ok(byTag.some((r) => r.id === 'pdf.extract_tables'), '按 tag=parse 应命中 pdf.extract_tables')
+  const byWhen = searchAtoms(records, { query: '报表' })
+  assert.equal(byWhen.length, 1)
+  assert.equal(byWhen[0].id, 'pdf.extract_tables')
+})
+
 test('store: readAtom + fetchRecordManifest returns full manifest incl description', async () => {
   const { records } = await openStore({ DSH_ATOM_STORE_DIR: ROOT }).load()
   const rec = readAtom(records, 'pdf.extract_tables')
