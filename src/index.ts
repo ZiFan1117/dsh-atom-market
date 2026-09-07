@@ -1,7 +1,7 @@
 import type { Context } from '@deepseek-ai/cordis'
 import { defineTool, type JsonValue } from '@deepseek-ai/dsh-tools'
 import { openStore, searchAtoms, readAtom, fetchRecordManifest } from './store.js'
-import { validateManifestText } from './validate.js'
+import { validateAtomText } from './validate.js'
 import { draftAtom, type DraftOptions } from './draft.js'
 
 export const name = 'dsh-atom-market'
@@ -43,7 +43,7 @@ export function apply(ctx: Context): void {
 
   ctx.tools.register(defineTool({
     name: 'atom_read',
-    description: '按 id 从来源仓实时读取某个原子的完整 manifest（含 input/output、description 四节四图、tests）。',
+    description: '按 id 从来源仓实时读取某个原子的 v0.3 atom 文档（frontmatter meta + 正文四节四图）。',
     parameters: {
       id: { type: 'string', required: true, description: '原子 id，如 pdf.extract_tables' },
     },
@@ -58,24 +58,24 @@ export function apply(ctx: Context): void {
       if (!rec) return { ok: false, id: args.id, error: `索引中找不到原子 ${args.id}` } as unknown as JsonValue
       const fetched = await fetchRecordManifest(rec, token)
       if (fetched.error || !fetched.manifest) {
-        return { ok: false, id: args.id, tier: rec.tier, source: rec.repo, error: fetched.error ?? '无 manifest' } as unknown as JsonValue
+        return { ok: false, id: args.id, tier: rec.tier, source: rec.repo, error: fetched.error ?? '无 atom 文档' } as unknown as JsonValue
       }
-      return { ok: true, id: rec.id, tier: rec.tier, source: rec.repo, manifest: fetched.manifest } as unknown as JsonValue
+      return { ok: true, id: rec.id, tier: rec.tier, source: rec.repo, format: 'atom.md', manifest: fetched.manifest } as unknown as JsonValue
     },
   }))
 
   ctx.tools.register(defineTool({
     name: 'atom_validate',
-    description: '按 atom.schema.json（含 description 四节+四图硬检）校验一份候选 atom manifest（JSON 文本）。机器过=可收录，无人工评审。',
+    description: '按 atom schema（v0.3：字段 + 正文四节+四图硬检）校验一份候选 <id>.atom.md 文档文本。机器过=可收录，无人工评审。',
     parameters: {
-      manifest: { type: 'string', required: true, description: '要校验的完整 manifest JSON 文本' },
+      manifest: { type: 'string', required: true, description: '要校验的 .atom.md 文档全文' },
     },
     output: {
       schema: { type: 'json' },
       render: (_args, value) => renderText(value),
     },
     async execute(args) {
-      return validateManifestText(args.manifest) as unknown as JsonValue
+      return validateAtomText(args.manifest) as unknown as JsonValue
     },
   }))
 

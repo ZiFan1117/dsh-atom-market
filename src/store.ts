@@ -1,5 +1,6 @@
 import { readFileSync, readdirSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
+import { parseAtomDocument } from './validate.js'
 
 export interface IndexAtom {
   repo: string
@@ -89,24 +90,35 @@ async function loadIndex(env: StoreEnv): Promise<LoadResult> {
   return { records }
 }
 
+/** v0.3：把一份 atom 文档文本解析为"有效 manifest"（frontmatter meta + description=正文）。仅 .atom.md。 */
+function effectiveManifest(text: string): { manifest?: Record<string, unknown>; error?: string } {
+  const parsed = parseAtomDocument(text)
+  if (!parsed.valid) {
+    return { error: `atom 文档解析失败：${parsed.errors.join(' | ')}` }
+  }
+  return { manifest: { ...parsed.meta, description: parsed.body } as Record<string, unknown> }
+}
+
 export function readLocalDir(root: string): AtomRecord[] {
   const atomsDir = join(root, 'atoms')
   if (!existsSync(atomsDir)) return []
   return readdirSync(atomsDir)
-    .filter((f) => f.endsWith('.atom.json'))
+    .filter((f) => f.endsWith('.atom.md'))
     .map((f) => {
       try {
-        const m = JSON.parse(readFileSync(join(atomsDir, f), 'utf8')) as Record<string, unknown>
+        const text = readFileSync(join(atomsDir, f), 'utf8')
+        const { manifest, error } = effectiveManifest(text)
+        if (error || !manifest) return null
         return {
           repo: 'local',
           path: join(atomsDir, f),
-          id: String(m.id ?? ''),
-          intent: String(m.intent ?? ''),
-          layer: String(m.layer ?? ''),
-          category: typeof m.category === 'string' ? m.category : undefined,
-          side_effects: typeof m.side_effects === 'string' ? m.side_effects : undefined,
-          version: String(m.version ?? ''),
-          verified: m.verified === true,
+          id: String(manifest.id ?? ''),
+          intent: String(manifest.intent ?? ''),
+          layer: String(manifest.layer ?? ''),
+          category: typeof manifest.category === 'string' ? manifest.category : undefined,
+          side_effects: typeof manifest.side_effects === 'string' ? manifest.side_effects : undefined,
+          version: String(manifest.version ?? ''),
+          verified: manifest.verified === true,
           tier: 'verified',
         } as AtomRecord
       } catch {
@@ -122,7 +134,7 @@ export function openStore(env: StoreEnv = process.env): { load: () => Promise<Lo
     return {
       async load() {
         const records = readLocalDir(root)
-        if (records.length === 0) return { records: [], error: `DSH_ATOM_STORE_DIR 下没有可读原子：${root}` }
+        if (records.length === 0) return { records: [], error: `DSH_ATOM_STORE_DIR 下没有 *.atom.md：${root}` }
         return { records }
       },
     }
@@ -133,10 +145,11 @@ export function openStore(env: StoreEnv = process.env): { load: () => Promise<Lo
 export async function fetchRecordManifest(rec: AtomRecord, token?: string): Promise<{ manifest?: Record<string, unknown>; error?: string }> {
   if (rec.repo === 'local') {
     try {
-      const manifest = JSON.parse(readFileSync(rec.path, 'utf8')) as Record<string, unknown>
-      return { manifest }
+      const res = effectiveManifest(readFileSync(rec.path, 'utf8'))
+      if (res.error) return { error: res.error }
+      return { manifest: res.manifest }
     } catch (e) {
-      return { error: `读取本地 manifest 失败：${e instanceof Error ? e.message : String(e)}` }
+      return { error: `读取本地 atom 文档失败：${e instanceof Error ? e.message : String(e)}` }
     }
   }
   const { data, error } = await fetchJson<{ content?: string }>(
@@ -145,10 +158,11 @@ export async function fetchRecordManifest(rec: AtomRecord, token?: string): Prom
   )
   if (error || !data?.content) return { error: `无法从来源仓 ${rec.repo} 读取 ${rec.path}（${error ?? '无内容'}）` }
   try {
-    const manifest = JSON.parse(Buffer.from(data.content, 'base64').toString('utf8')) as Record<string, unknown>
-    return { manifest }
+    const res = effectiveManifest(Buffer.from(data.content, 'base64').toString('utf8'))
+    if (res.error) return { error: `来源仓 atom 文档解析失败：${res.error}` }
+    return { manifest: res.manifest }
   } catch (e) {
-    return { error: `来源仓 manifest 解析失败：${e instanceof Error ? e.message : String(e)}` }
+    return { error: `来源仓 atom 文档解析失败：${e instanceof Error ? e.message : String(e)}` }
   }
 }
 
