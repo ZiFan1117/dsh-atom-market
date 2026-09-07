@@ -17,7 +17,7 @@ export function apply(ctx: Context): void {
 
   ctx.tools.register(defineTool({
     name: 'atom_search',
-    description: '在 Software Atom Market（GitHub 商店，topic: software-atom 联邦聚合）按意图/分类检索原子，返回指针级摘要（一句话）；选中后 atom_read 从来源仓实时读完整契约。',
+    description: '在 Software Atom Market（GitHub 商店，topic: software-atom 联邦聚合）按意图/标签/适用场景/分类检索原子，返回指针级摘要（一句话）；选中后 atom_read 从来源仓实时读完整契约。',
     parameters: {
       query: { type: 'string', description: '意图关键词，如 "从 PDF 抽出表格"' },
       source: { type: 'string', enum: ['verified', 'community', 'all'], description: '来源层级：verified=中央策展 / community=联邦发现 / all=全部，默认 all' },
