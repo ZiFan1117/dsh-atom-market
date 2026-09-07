@@ -13,6 +13,8 @@ export interface IndexAtom {
   version: string
   verified: boolean
   updated_at?: string
+  tags?: string[]
+  when_to_use?: string
 }
 
 export interface AtomRecord extends IndexAtom {
@@ -119,6 +121,8 @@ export function readLocalDir(root: string): AtomRecord[] {
           side_effects: typeof manifest.side_effects === 'string' ? manifest.side_effects : undefined,
           version: String(manifest.version ?? ''),
           verified: manifest.verified === true,
+          tags: Array.isArray(manifest.tags) ? (manifest.tags as unknown[]).map(String) : undefined,
+          when_to_use: typeof manifest.when_to_use === 'string' ? manifest.when_to_use : undefined,
           tier: 'verified',
         } as AtomRecord
       } catch {
@@ -182,7 +186,7 @@ export function searchAtoms(records: AtomRecord[], opts: ListOptions): AtomRecor
     if (opts.category && r.category !== opts.category) return false
     if (src !== 'all' && r.tier !== src) return false
     if (!q) return true
-    const hay = [r.id, r.intent, r.layer, r.category ?? ''].join(' ').toLowerCase()
+    const hay = [r.id, r.intent, r.layer, r.category ?? '', r.when_to_use ?? '', ...(r.tags ?? [])].join(' ').toLowerCase()
     return q.split(/\s+/).every((part) => hay.includes(part))
   })
   filtered.sort((a, b) => a.id.localeCompare(b.id))
