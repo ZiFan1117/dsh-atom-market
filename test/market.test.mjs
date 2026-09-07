@@ -1,9 +1,10 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import { openStore, searchAtoms, readAtom, fetchRecordManifest } from '../lib/store.js'
-import { validateManifestText, validateManifestObject } from '../lib/validate.js'
+import { validateManifestText, validateManifestObject, validateAtomText } from '../lib/validate.js'
 import { draftAtom } from '../lib/draft.js'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), 'fixtures')
@@ -81,4 +82,11 @@ test('draft: verified:false, notes mention description diagrams', () => {
   assert.equal(d.draft.id, 'money.convert')
   assert.equal(d.draft.verified, false)
   assert.ok(d.notes.some((n) => n.includes('description 必填')))
+})
+
+test('validate: v0.3 .atom.md 文档全文通过机器闸（frontmatter+四节四图）', () => {
+  const text = readFileSync(join(ROOT, 'atoms', 'pdf.extract_tables.atom.md'), 'utf8')
+  const r = validateAtomText(text)
+  assert.equal(r.valid, true, JSON.stringify(r.errors))
+  assert.equal(r.errors.length, 0)
 })
