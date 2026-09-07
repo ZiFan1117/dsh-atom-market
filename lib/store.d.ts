@@ -9,6 +9,8 @@ export interface IndexAtom {
     version: string;
     verified: boolean;
     updated_at?: string;
+    tags?: string[];
+    when_to_use?: string;
 }
 export interface AtomRecord extends IndexAtom {
     tier: 'verified' | 'community';
