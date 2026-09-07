@@ -190,7 +190,7 @@ export function searchAtoms(records: AtomRecord[], opts: ListOptions): AtomRecor
     return q.split(/\s+/).every((part) => hay.includes(part))
   })
   filtered.sort((a, b) => a.id.localeCompare(b.id))
-  const limit = Math.max(1, Math.floor(opts.limit ?? 20))
+  const limit = Math.min(500, Math.max(1, Math.floor(opts.limit ?? 200)))
   return filtered.slice(0, limit)
 }
 
