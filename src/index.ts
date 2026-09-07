@@ -43,7 +43,7 @@ export function apply(ctx: Context): void {
 
   ctx.tools.register(defineTool({
     name: 'atom_read',
-    description: '按 id 从来源仓实时读取某个原子的完整文档/契约（v0.3 .atom.md：frontmatter meta + 正文四节四图；旧 .atom.json 兼容）。',
+    description: '按 id 从来源仓实时读取某个原子的 v0.3 atom 文档（frontmatter meta + 正文四节四图）。',
     parameters: {
       id: { type: 'string', required: true, description: '原子 id，如 pdf.extract_tables' },
     },
@@ -58,17 +58,17 @@ export function apply(ctx: Context): void {
       if (!rec) return { ok: false, id: args.id, error: `索引中找不到原子 ${args.id}` } as unknown as JsonValue
       const fetched = await fetchRecordManifest(rec, token)
       if (fetched.error || !fetched.manifest) {
-        return { ok: false, id: args.id, tier: rec.tier, source: rec.repo, error: fetched.error ?? '无 manifest' } as unknown as JsonValue
+        return { ok: false, id: args.id, tier: rec.tier, source: rec.repo, error: fetched.error ?? '无 atom 文档' } as unknown as JsonValue
       }
-      return { ok: true, id: rec.id, tier: rec.tier, source: rec.repo, format: rec.path.endsWith('.atom.md') ? 'atom.md' : 'atom.json', manifest: fetched.manifest } as unknown as JsonValue
+      return { ok: true, id: rec.id, tier: rec.tier, source: rec.repo, format: 'atom.md', manifest: fetched.manifest } as unknown as JsonValue
     },
   }))
 
   ctx.tools.register(defineTool({
     name: 'atom_validate',
-    description: '按 atom schema（v0.3：字段 + 正文四节+四图硬检）校验一份候选原子——支持 <id>.atom.md 文档文本或旧 JSON manifest（自动识别）。机器过=可收录，无人工评审。',
+    description: '按 atom schema（v0.3：字段 + 正文四节+四图硬检）校验一份候选 <id>.atom.md 文档文本。机器过=可收录，无人工评审。',
     parameters: {
-      manifest: { type: 'string', required: true, description: '要校验的 .atom.md 文档全文 或 legacy JSON manifest 文本' },
+      manifest: { type: 'string', required: true, description: '要校验的 .atom.md 文档全文' },
     },
     output: {
       schema: { type: 'json' },
