@@ -36,7 +36,7 @@ export function apply(ctx: Context): void {
         category: args.category,
         source: args.source ?? 'all',
         limit: args.limit,
-      }).map((r) => ({ id: r.id, intent: r.intent, tier: r.tier, source: r.repo }))
+      }).map((r) => ({ id: r.id, intent: r.intent, tier: r.tier, verified: r.verified, source: r.repo }))
       return { ok: true, count: items.length, items } as unknown as JsonValue
     },
   }))
